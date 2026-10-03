@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">tiny-Vertex</string>
+    <string name="hint">Message tiny-Vertex...</string>
+    <string name="send">Send</string>
+</resources>
