@@ -13,8 +13,8 @@ MODEL_ID = os.environ.get("SFT_BASE", "HuggingFaceTB/SmolLM2-360M-Instruct")
 DATA = os.environ.get("SFT_DATA", "tiny_vertex_dialogues.jsonl")
 OUT = os.environ.get("SFT_OUT", "tinyvertex-360m-merged")
 
-EPOCHS = float(os.environ.get("SFT_EPOCHS", "3"))
-LR = float(os.environ.get("SFT_LR", "2e-4"))
+EPOCHS = float(os.environ.get("SFT_EPOCHS", "2"))
+LR = float(os.environ.get("SFT_LR", "1e-4"))
 MAX_LEN = int(os.environ.get("SFT_MAXLEN", "512"))
 
 
