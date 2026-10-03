@@ -23,7 +23,15 @@ def main():
     from datasets import load_dataset
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-    from trl import SFTTrainer, SFTConfig
+    try:
+        # trl >= 0.9: SFTConfig + processing_class (needs pip install -U trl)
+        from trl import SFTTrainer, SFTConfig
+        _TRL_NEW = True
+    except ImportError:
+        # older trl: plain TrainingArguments, tokenizer= kwarg
+        from trl import SFTTrainer
+        from transformers import TrainingArguments as SFTConfig
+        _TRL_NEW = False
 
     use_cuda = torch.cuda.is_available()
     dtype = torch.float16 if use_cuda else torch.float32
@@ -61,7 +69,7 @@ def main():
 
     ds = ds.map(fmt, remove_columns=ds.column_names)
 
-    args = SFTConfig(
+    base_kwargs = dict(
         output_dir="sft-out",
         num_train_epochs=EPOCHS,
         per_device_train_batch_size=2 if use_cuda else 1,
@@ -70,14 +78,19 @@ def main():
         logging_steps=10,
         save_steps=200,
         save_total_limit=2,
-        max_length=MAX_LEN,
-        packing=False,
-        dataset_text_field="text",
         report_to="none",
         fp16=use_cuda,
     )
-    trainer = SFTTrainer(model=model, args=args, train_dataset=ds,
-                         processing_class=tok)
+    if _TRL_NEW:
+        args = SFTConfig(**base_kwargs, max_length=MAX_LEN,
+                         packing=False, dataset_text_field="text")
+        trainer = SFTTrainer(model=model, args=args, train_dataset=ds,
+                             processing_class=tok)
+    else:
+        args = SFTConfig(**base_kwargs)
+        trainer = SFTTrainer(model=model, args=args, train_dataset=ds,
+                             tokenizer=tok, dataset_text_field="text",
+                             max_seq_length=MAX_LEN, packing=False)
     trainer.train()
 
     merged = model.merge_and_unload()
