@@ -10,7 +10,12 @@ voice), merge, convert to GGUF Q4_K_M, download. Free T4: ~20-40 min.
 ```
 !nvidia-smi -L
 !pip install -q -U transformers peft trl accelerate datasets
+!pip uninstall -q -y torchao
 ```
+- Runtime menu → **Change runtime type → T4 GPU** first. If `nvidia-smi`
+  prints nothing, you are on CPU: training works but takes ~10x longer.
+- `torchao` is uninstalled on purpose: Colab ships an old copy that new
+  `peft` chokes on, and LoRA here does not need it.
 
 **2. Upload data + script**
 Upload these two files from this repo (Files panel → Upload):
