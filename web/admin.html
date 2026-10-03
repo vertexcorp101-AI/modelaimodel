@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LightBrain — Provider Dashboard</title>
+<style>
+  :root {
+    --bg: #0b1020; --panel: #121a33; --panel2: #172042; --line: #26304f;
+    --text: #e7ecff; --muted: #8b96b8; --accent: #6c8cff; --accent2: #8a63ff;
+    --green: #3ddc84; --red: #ff5c72; --amber: #ffb454;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(1200px 700px at 80% -10%, #1a2450 0%, var(--bg) 55%);
+    color: var(--text); min-height: 100vh; display: flex;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  .sidebar {
+    width: 240px; background: rgba(18,26,51,.85); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+  }
+  .brand { padding: 20px 18px 16px; border-bottom: 1px solid var(--line); }
+  .brand h1 { font-size: 17px; letter-spacing: .3px; }
+  .brand small { color: var(--muted); font-size: 11px; }
+  .nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+  .nav button {
+    display: flex; gap: 10px; align-items: center; width: 100%;
+    padding: 10px 12px; margin-bottom: 4px; background: none; border: 0; border-radius: 8px;
+    color: var(--muted); font-size: 14px; cursor: pointer; text-align: left;
+  }
+  .nav button .ic { width: 18px; text-align: center; }
+  .nav button:hover { background: var(--panel2); color: var(--text); }
+  .nav button.active { background: linear-gradient(90deg, var(--panel2), transparent); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+  .side-foot { padding: 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .side-foot button { width: 100%; margin-top: 8px; padding: 8px; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; cursor: pointer; }
+  .side-foot button:hover { color: var(--red); border-color: var(--red); }
+  .main { flex: 1; padding: 26px 30px; max-width: 1100px; }
+  .topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .topbar h2 { font-size: 20px; font-weight: 600; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+    padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--muted);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+  .dot.ready { background: var(--green); }
+  .dot.loading { background: var(--amber); animation: pulse 1.2s infinite; }
+  .dot.error { background: var(--red); }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card h3 { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .4px; }
+  .card .big { font-size: 26px; font-weight: 700; }
+  .card p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .kv { display: grid; grid-template-columns: 130px 1fr; gap: 8px 14px; font-size: 13px; }
+  .kv dt { color: var(--muted); } .kv dd { word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; border: 1px solid var(--line); }
+  .badge.on { color: var(--green); border-color: #1d5a3a; background: rgba(61,220,132,.08); }
+  .badge.off { color: var(--red); border-color: #6b2430; background: rgba(255,92,114,.08); }
+  .btn {
+    padding: 9px 16px; border-radius: 9px; border: 1px solid var(--line); cursor: pointer;
+    font-size: 13px; font-weight: 600; background: var(--panel2); color: var(--text);
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: linear-gradient(90deg, var(--accent), var(--accent2)); border: 0; color: #fff; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { color: var(--red); } .btn.danger:hover { border-color: var(--red); }
+  .btn.small { padding: 5px 10px; font-size: 12px; }
+  input, textarea, select {
+    width: 100%; background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: 9px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 90px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 6px; font-weight: 600; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .keybox {
+    margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px dashed var(--green);
+    background: rgba(61,220,132,.06);
+  }
+  .keybox .mono { user-select: all; word-break: break-all; display: block; margin: 8px 0; font-size: 13px; color: var(--green); }
+  .stat-line { font-size: 13px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+  .reply-box { margin-top: 14px; padding: 14px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); white-space: pre-wrap; font-size: 14px; line-height: 1.55; }
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 50; padding: 12px 18px;
+    border-radius: 10px; background: var(--panel2); border: 1px solid var(--line);
+    font-size: 13px; box-shadow: 0 8px 30px rgba(0,0,0,.4); opacity: 0; transform: translateY(8px);
+    transition: all .2s;
+  }
+  .toast.show { opacity: 1; transform: none; }
+  .toast.err { border-color: var(--red); }
+  .toast.ok { border-color: var(--green); }
+  .empty { color: var(--muted); font-size: 13px; padding: 30px; text-align: center; }
+  .small { font-size: 12px; color: var(--muted); }
+  .chip { display: inline-block; margin-right: 6px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-size: 12px; }
+  .chip:hover { border-color: var(--accent); }
+  /* login */
+  .login-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 40; }
+  .login-card { width: 340px; padding: 30px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+  .login-card h2 { margin-bottom: 4px; }
+  .login-card .small { margin-bottom: 18px; }
+  .hidden { display: none !important; }
+  .fetching { opacity: .5; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login-wrap hidden">
+  <form class="login-card" id="loginForm">
+    <h2>LightBrain</h2>
+    <div class="small">Provider admin dashboard</div>
+    <label>Username</label>
+    <input id="luser" autocomplete="username" required>
+    <label>Password</label>
+    <input id="lpass" type="password" autocomplete="current-password" required>
+    <div style="height:14px"></div>
+    <button class="btn primary" style="width:100%" type="submit">Sign in</button>
+  </form>
+</div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <h1>🧠 LightBrain</h1>
+    <small>Provider dashboard</small>
+  </div>
+  <nav class="nav">
+    <button data-view="overview" class="active"><span class="ic">▦</span> Overview</button>
+    <button data-view="keys"><span class="ic">🗝</span> API Keys</button>
+    <button data-view="playground"><span class="ic">⌘</span> Playground</button>
+    <button data-view="usage"><span class="ic">📈</span> Usage & Logs</button>
+  </nav>
+  <div class="side-foot">
+    <span id="footModel" class="mono">SmolLM2-360M-Instruct</span>
+    <button id="logoutBtn">Sign out</button>
+  </div>
+</aside>
+
+<main class="main" id="main">
+
+  <div class="topbar">
+    <h2 id="pageTitle">Overview</h2>
+    <span class="pill"><span class="dot" id="statusDot"></span><span id="statusLabel">loading…</span></span>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section id="view-overview">
+    <div class="grid">
+      <div class="card"><h3>Status</h3><div class="big" id="ovStatus">—</div><p id="ovBootErr"></p></div>
+      <div class="card"><h3>Active API keys</h3><div class="big" id="ovKeys">—</div></div>
+      <div class="card"><h3>Total requests</h3><div class="big" id="ovReqs">—</div></div>
+      <div class="card"><h3>Uptime</h3><div class="big" id="ovUp">—</div><p>Started <span id="ovStarted" class="mono"></span></p></div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <h3>Model</h3>
+      <dl class="kv">
+        <dt>Model id</dt><dd class="mono">SmolLM2-360M-Instruct</dd>
+        <dt>Context</dt><dd class="mono" id="ovCtx">—</dd>
+        <dt>GGUF</dt><dd class="mono" id="ovGguf">—</dd>
+        <dt>Base URL</dt><dd class="mono" id="ovBase">—</dd>
+        <dt>Request timeout</dt><dd class="mono" id="ovTimeout">—</dd>
+        <dt>Max output tokens</dt><dd class="mono" id="ovMaxTok">—</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>Quick test</h3>
+      <textarea id="qPrompt">Say hello in one short sentence.</textarea>
+      <div style="height:10px"></div>
+      <button class="btn primary" id="qBtn">Test the model</button>
+      <div class="reply-box hidden" id="qReply"></div>
+      <div class="stat-line" id="qStats"></div>
+    </div>
+  </section>
+
+  <!-- API KEYS -->
+  <section id="view-keys" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <h3>Create API key</h3>
+      <div class="row">
+        <input id="keyName" placeholder="Key name (e.g. vertex, staging, prod)" style="max-width:340px">
+        <button class="btn primary" id="keyCreate">Create key</button>
+      </div>
+      <div class="keybox hidden" id="keyBox">
+        Copy it now — it is shown only once:
+        <span class="mono" id="keyRaw"></span>
+        <button class="btn small" id="keyCopy">Copy</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>API keys</h3>
+      <table>
+        <thead><tr><th>Name</th><th>Key</th><th>Status</th><th>Created</th><th>Last used</th><th></th></tr></thead>
+        <tbody id="keysBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PLAYGROUND -->
+  <section id="view-playground" class="hidden">
+    <div class="card">
+      <h3>Playground</h3>
+      <div style="margin-bottom:10px">
+        <span class="chip" data-prompt="Say hello in one short sentence.">Hello</span>
+        <span class="chip" data-prompt="What is the capital of France?">Capital</span>
+        <span class="chip" data-prompt="Explain what RAG means in simple words.">RAG</span>
+        <span class="chip" data-prompt="Write a short poem about a small brain that thinks big.">Poem</span>
+      </div>
+      <label>System (optional)</label>
+      <input id="pgSystem" placeholder="You are a helpful assistant.">
+      <label>User message</label>
+      <textarea id="pgMsg" placeholder="Type a message for SmolLM2-360M…"></textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="pgSend">Send</button>
+        <span class="small" id="pgState">model is warming up…</span>
+      </div>
+      <div class="reply-box hidden" id="pgReply"></div>
+      <div class="stat-line" id="pgStats"></div>
+    </div>
+  </section>
+
+  <!-- USAGE -->
+  <section id="view-usage" class="hidden">
+    <div class="grid">
+      <div class="card"><h3>Requests</h3><div class="big" id="usReqs">—</div></div>
+      <div class="card"><h3>Prompt tokens</h3><div class="big" id="usPt">—</div></div>
+      <div class="card"><h3>Completion tokens</h3><div class="big" id="usCt">—</div></div>
+      <div class="card"><h3>Errors</h3><div class="big" id="usErrs">—</div></div>
+    </div>
+    <div class="card">
+      <h3>Recent requests</h3>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Time</th><th>Key</th><th>Path</th><th>Status</th><th>In</th><th>Out</th><th>Latency</th><th>Error</th></tr></thead>
+        <tbody id="usageBody"></tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let status = null;
+
+function toast(msg, kind = "") {
+  const t = $("toast");
+  t.textContent = msg; t.className = "toast show " + kind;
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3000);
+}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json", ...(opts.headers||{}) }, ...opts });
+  let data = null; try { data = await r.json(); } catch (e) {}
+  if (r.status === 401 && !path.includes("/login")) { showLogin(); throw new Error("not authenticated"); }
+  return { ok: r.ok, data };
+}
+
+let currentView = "overview";
+function showView(v) {
+  currentView = v;
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.view === v));
+  ["overview","keys","playground","usage"].forEach(x => $(`view-${x}`).classList.toggle("hidden", x !== v));
+  const titles = { overview: "Overview", keys: "API Keys", playground: "Playground", usage: "Usage & Logs" };
+  $("pageTitle").textContent = titles[v];
+  if (v === "keys") loadKeys();
+  if (v === "usage") loadUsage();
+  if (v === "overview") loadStatus();
+}
+document.querySelectorAll(".nav button").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
+
+function showLogin() { $("loginView").classList.remove("hidden"); $("sidebar").classList.add("hidden"); $("main").classList.add("hidden"); }
+function hideLogin() { $("loginView").classList.add("hidden"); $("sidebar").classList.remove("hidden"); $("main").classList.remove("hidden"); }
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await api("/admin/api/login", { method: "POST", body: JSON.stringify({ username: $("luser").value, password: $("lpass").value }) });
+  if (r.ok) { hideLogin(); refreshStatus(); showView("overview"); toast("Signed in", "ok"); }
+  else toast("Invalid credentials", "err");
+});
+$("logoutBtn").addEventListener("click", async () => { await api("/admin/api/logout", { method: "POST" }); showLogin(); });
+
+function fmtMs(ms, mt = 2500) {
+  if (ms == null) return "—";
+  if (ms >= 60000) return (ms / 60000).toFixed(1) + " m";
+  if (ms >= 1000) return (ms / 1000).toFixed(1) + " s";
+  return ms + " ms";
+}
+function fmtUp(s) {
+  const d = Math.floor(s / 86400); const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return d ? `${d}d ${h}h ${m}m` : h ? `${h}h ${m}m` : `${m}m ${s % 60}s`;
+}
+function setStatus(s) {
+  status = s;
+  const dot = $("statusDot"), lbl = $("statusLabel");
+  dot.className = "dot " + (s.ready ? "ready" : s.boot_error ? "error" : "loading");
+  lbl.textContent = s.ready ? "ready" : s.boot_error ? "error" : "loading…";
+}
+
+async function refreshStatus() {
+  const r = await api("/admin/api/status");
+  if (!r.ok) return;
+  setStatus(r.data);
+}
+async function loadStatus() {
+  const r = await api("/admin/api/status");
+  if (!r.ok) return;
+  const s = r.data; setStatus(s);
+  $("ovStatus").textContent = s.ready ? "Online" : s.boot_error ? "Boot failed" : "Loading model";
+  $("ovStatus").style.color = s.ready ? "var(--green)" : s.boot_error ? "var(--red)" : "var(--amber)";
+  $("ovBootErr").textContent = s.boot_error || "";
+  $("ovCtx").textContent = s.ctx ?? "—";
+  $("ovGguf").textContent = s.gguf ? String(s.gguf.name) : "—";
+  $("ovBase").textContent = s.base_url;
+  $("ovTimeout").textContent = s.request_timeout_s + " s";
+  $("ovMaxTok").textContent = s.max_tokens;
+  $("ovStarted").textContent = s.started_at;
+  $("ovUp").textContent = fmtUp(s.uptime_s);
+  const k = await api("/admin/api/keys"); $("ovKeys").textContent = k.ok && k.data.keys ? k.data.keys.filter(x => x.active).length : "—";
+  const u = await api("/admin/api/usage"); $("ovReqs").textContent = u.ok && u.data.agg ? (u.data.agg.n ?? 0) : "—";
+}
+
+async function loadKeys() {
+  const r = await api("/admin/api/keys");
+  $("keysBody").innerHTML = "";
+  if (!r.ok) return;
+  const rows = r.data.keys || [];
+  if (!rows.length) { $("keysBody").innerHTML = '<tr><td colspan="6" class="empty">No API keys yet — create one above.</td></tr>'; return; }
+  for (const k of rows) {
+    const tr = document.createElement("tr");
+    const masked = k.key_prefix + "••••••••••••" + k.key_suffix;
+    tr.innerHTML = `
+      <td>${esc(k.name)}</td>
+      <td class="mono">${esc(masked)}</td>
+      <td><span class="badge ${k.active ? "on" : "off"}">${k.active ? "active" : "revoked"}</span></td>
+      <td class="small">${esc((k.created_at||"").slice(0,16).replace("T"," "))}</td>
+      <td class="small">${esc((k.last_used_at||"").slice(0,16).replace("T"," ")) || "never"}</td>
+      <td class="row" style="justify-content:flex-end">
+        ${k.active ? `<button class="btn small danger" data-revoke="${k.id}">Revoke</button>`
+                   : `<button class="btn small" data-revoke="${k.id}">Activate</button>`}
+        <button class="btn small danger" data-del="${k.id}">Delete</button>
+      </td>`;
+    $("keysBody").appendChild(tr);
+  }
+}
+$("keysBody").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-revoke],button[data-del]");
+  if (!b) return;
+  const id = b.dataset.revoke || b.dataset.del;
+  const act = b.dataset.revoke !== undefined ? "revoke" : "delete";
+  if (act === "revoke") {
+    const r = await api(`/admin/api/keys/${id}/revoke`, { method: "POST", body: "{}" });
+    if (r.ok) toast(b.textContent.trim() === "Revoke" ? "Key revoked" : "Key activated", "ok");
+  } else {
+    if (!confirm("Delete this key permanently?")) return;
+    const r = await api(`/admin/api/keys/${id}/delete`, { method: "POST", body: "{}" });
+    if (r.ok) toast("Key deleted", "ok");
+  }
+  loadKeys();
+});
+
+$("keyCreate").addEventListener("click", async () => {
+  const name = $("keyName").value.trim() || "api key";
+  const r = await api("/admin/api/keys", { method: "POST", body: JSON.stringify({ name }) });
+  if (!r.ok) { toast("Failed to create key", "err"); return; }
+  $("keyRaw").textContent = r.data.key;
+  $("keyBox").classList.remove("hidden");
+  toast("Key created", "ok"); loadKeys();
+});
+$("keyCopy").addEventListener("click", async () => {
+  await navigator.clipboard.writeText($("keyRaw").textContent).catch(() => {});
+  toast("Copied", "ok");
+});
+
+async function runTest(messages, btnId, replyId, statsId) {
+  const btn = $(btnId); btn.classList.add("fetching"); btn.textContent = "Running…";
+  $(replyId).classList.remove("hidden"); $(replyId).textContent = "thinking…";
+  $(statsId).textContent = "";
+  const t0 = Date.now();
+  const r = await api("/admin/api/test", { method: "POST", body: JSON.stringify({ messages, max_tokens: 128 }) });
+  btn.classList.remove("fetching"); btn.textContent = "Test the model";
+  if (!r.ok) {
+    $(replyId).textContent = (r.data && (r.data.error || r.data.reply)) || "request failed";
+    $(statsId).textContent = "❌ " + ((Date.now() - t0) / 1000).toFixed(1) + " s";
+    return;
+  }
+  const d = r.data;
+  $(replyId).textContent = d.reply || "(empty reply)";
+  const u = d.usage || {};
+  $(statsId).textContent = `✓ ${(d.latency_ms/1000).toFixed(1)} s · ${u.prompt_tokens ?? "?"} in → ${u.completion_tokens ?? "?"} out · ${Math.round((u.completion_tokens||0)/(d.latency_ms/1000)||0)} tok/s`;
+}
+$("qBtn").addEventListener("click", () => runTest([{ role: "user", content: $("qPrompt").value || "hi" }], "qBtn", "qReply", "qStats"));
+document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => { $("pgMsg").value = c.dataset.prompt; }));
+$("pgSend").addEventListener("click", () => {
+  const msgs = [];
+  if ($("pgSystem").value.trim()) msgs.push({ role: "system", content: $("pgSystem").value.trim() });
+  msgs.push({ role: "user", content: $("pgMsg").value || "hi" });
+  const btn = $("pgSend"); btn.classList.add("fetching");
+  runTest(msgs, "pgSend", "pgReply", "pgStats").finally(() => { btn.classList.remove("fetching"); });
+});
+
+async function loadUsage() {
+  const r = await api("/admin/api/usage");
+  if (!r.ok) return;
+  const a = r.data.agg || {};
+  $("usReqs").textContent = a.n ?? 0;
+  $("usPt").textContent = (a.pt ?? 0).toLocaleString();
+  $("usCt").textContent = (a.ct ?? 0).toLocaleString();
+  $("usErrs").textContent = a.errs ?? 0;
+  const rows = r.data.requests || [];
+  $("usageBody").innerHTML = "";
+  if (!rows.length) { $("usageBody").innerHTML = '<tr><td colspan="8" class="empty">No requests yet.</td></tr>'; return; }
+  for (const x of rows) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="small">${esc((x.ts||"").slice(0,19).replace("T"," "))}</td>
+      <td class="mono small">${esc(x.key_prefix || "—")}</td>
+      <td class="mono small">${esc(x.path || "—")}</td>
+      <td><span class="badge ${x.status >= 400 ? "off" : "on"}">${x.status ?? "—"}</span></td>
+      <td class="small">${x.prompt_tokens ?? "—"}</td>
+      <td class="small">${x.completion_tokens ?? "—"}</td>
+      <td class="small">${fmtMs(x.latency_ms)}</td>
+      <td class="small" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${esc(x.error || "")}</td>`;
+    $("usageBody").appendChild(tr);
+  }
+}
+
+(async function boot() {
+  try {
+    const r = await api("/admin/api/session");
+    if (!r.ok) { showLogin(); return; }
+    hideLogin();
+    await refreshStatus();
+    showView("overview");
+  } catch (e) { showLogin(); }
+  setInterval(() => { if (currentView === "overview") refreshStatus(); }, 15000);
+})();
+</script>
+</body>
+</html>

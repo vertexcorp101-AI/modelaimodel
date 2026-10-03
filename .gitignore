@@ -1,0 +1,16 @@
+# large downloads auto-fetched at runtime (server deploys)
+models/
+
+# runtime state
+runs/
+state/
+*.log
+*.part
+
+# python
+__pycache__/
+*.pyc
+
+# secrets / local tooling
+.env
+_dljob*.ps1
