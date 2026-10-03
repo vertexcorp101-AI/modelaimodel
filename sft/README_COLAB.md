@@ -29,14 +29,21 @@ Upload these two files from this repo (Files panel → Upload):
 Watches: loss should fall steadily (e.g. 2.x → ~1.x). If loss explodes or
 prints NaN, stop: lower `SFT_LR=1e-4` and rerun.
 
-**4. Convert merged model → GGUF → Q4_K_M** (no compile: prebuilt binary)
+**4. Convert merged model → GGUF → Q4_K_M**
+
+The newest llama.cpp tokenizer path breaks on SmolLM2's tokenizer with
+the newest transformers — use the pinned tag below (it carries the older,
+working `convert_hf_to_gguf.py` script) and build `quantize` from source
+(the prebuilt Ubuntu archives no longer ship it):
+
 ```
-!git clone --depth 1 https://github.com/ggml-org/llama.cpp
+%cd /content/modelaimodel/sft
+!git clone --depth 1 --branch b7123 https://github.com/ggml-org/llama.cpp
 !pip install -q -r llama.cpp/requirements/requirements-convert_hf_to_gguf.txt
 !python llama.cpp/convert_hf_to_gguf.py tinyvertex-360m-merged --outfile tinyvertex-360m-f16.gguf
-!curl -sL -o llama-quant.tar.gz https://github.com/ggml-org/llama.cpp/releases/download/b11179/llama-b11179-bin-ubuntu-x64.tar.gz
-!tar xzf llama-quant.tar.gz --wildcards '*/quantize' --strip-components=2
-!./quantize tinyvertex-360m-f16.gguf tinyvertex-360m-Q4_K_M.gguf Q4_K_M
+!cmake -S llama.cpp -B llama.cpp/build -DCMAKE_BUILD_TYPE=Release
+!cmake --build llama.cpp/build --config Release --target llama-quantize -j 2
+!llama.cpp/build/bin/llama-quantize tinyvertex-360m-f16.gguf tinyvertex-360m-Q4_K_M.gguf Q4_K_M
 !ls -la *.gguf
 ```
 
