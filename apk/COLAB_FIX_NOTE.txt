@@ -1,0 +1,9 @@
+Colab broken because shell cwd is invalid ("cannot access parent directories").
+Fix: Runtime -> Restart runtime, then run cells 1-5 cleanly.
+
+Use the updated cells in apk/COLAB_ALL_CELLS.txt (paths go to apk-build/apk).
+Cell 2 should explicitly cd to /content:
+!cd /content && rm -rf apk-build && git clone https://github.com/vertexcorp101-AI/modelaimodel apk-build
+
+Then mkdir/copy to /content/apk-build/apk/... and build from /content/apk-build/apk.
+Yes, gradlew is at apk-build/apk/gradlew.
