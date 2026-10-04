@@ -21,15 +21,15 @@ from google.colab import drive
 drive.mount('/content/drive')
 !rm -rf /content/apk-build
 !git clone https://github.com/vertexcorp101-AI/modelaimodel /content/apk-build
-!mkdir -p /content/apk-build/app/src/main/assets
-!cp "/content/drive/MyDrive/tinyvertex-360m-Q4_K_M.gguf" /content/apk-build/app/src/main/assets/
-!ls -lh /content/apk-build/app/src/main/assets/
-!ls -la /content/apk-build/gradlew
+!mkdir -p /content/apk-build/apk/app/src/main/assets
+!cp "/content/drive/MyDrive/tinyvertex-360m-Q4_K_M.gguf" /content/apk-build/apk/app/src/main/assets/
+!ls -lh /content/apk-build/apk/app/src/main/assets/
+!ls -la /content/apk-build/apk/gradlew
 ```
 
 ## Cell 3 — Clone llama.cpp (pinned b7123)
 ```python
-!git clone --depth 1 --branch b7123 https://github.com/ggml-org/llama.cpp /content/apk-build/app/src/main/cpp/llama.cpp
+!git clone --depth 1 --branch b7123 https://github.com/ggml-org/llama.cpp /content/apk-build/apk/app/src/main/cpp/llama.cpp
 ```
 
 ## Cell 4 — Build APK (assembleRelease)
@@ -38,7 +38,7 @@ import os
 os.environ["ANDROID_HOME"] = "/opt/android-sdk"
 os.environ["ANDROID_NDK_HOME"] = "/opt/android-sdk/ndk/27.1.12297006"
 os.environ["PATH"] = os.environ["ANDROID_HOME"] + "/cmdline-tools/latest/bin:" + os.environ["ANDROID_HOME"] + "/platform-tools:" + os.environ["PATH"]
-os.chdir("/content/apk-build")
+os.chdir("/content/apk-build/apk")
 !chmod +x gradlew
 !./gradlew assembleRelease --no-daemon --max-workers=2
 ```
@@ -46,7 +46,7 @@ os.chdir("/content/apk-build")
 ## Cell 5 — Copy APK to Google Drive
 ```python
 !mkdir -p /content/drive/MyDrive/apk
-!cp /content/apk-build/app/build/outputs/apk/release/app-release.apk /content/drive/MyDrive/apk/tinyvertex-v1.apk
+!cp /content/apk-build/apk/app/build/outputs/apk/release/app-release.apk /content/drive/MyDrive/apk/tinyvertex-v1.apk
 !ls -lh /content/drive/MyDrive/apk/tinyvertex-v1.apk
 ```
 
