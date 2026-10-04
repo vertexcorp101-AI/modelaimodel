@@ -1,0 +1,57 @@
+# tiny-Vertex APK — All Colab Cells
+
+## Cell 1 — Setup Android SDK + NDK + JDK
+```python
+!apt-get update -qq && apt-get install -y -qq openjdk-17-jdk cmake
+!wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmd.zip
+!unzip -q /tmp/cmd.zip -d /tmp/cmdtools
+!mkdir -p /opt/android-sdk/cmdline-tools/latest
+!mv /tmp/cmdtools/cmdline-tools/* /opt/android-sdk/cmdline-tools/latest/
+!rm -rf /tmp/cmdtools
+%env ANDROID_HOME=/opt/android-sdk
+%env PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/build-tools/34.0.0:/usr/bin:/bin:/usr/local/bin
+!yes | sdkmanager --licenses > /dev/null
+!sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;27.1.12297006" > /dev/null
+!echo "SDK ready: $(ls /opt/android-sdk/platforms)"
+```
+
+## Cell 2 — Clone repo + copy model from Google Drive
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+!rm -rf /content/apk-build
+!git clone https://github.com/vertexcorp101-AI/modelaimodel /content/apk-build
+!mkdir -p /content/apk-build/app/src/main/assets
+!cp "/content/drive/MyDrive/tinyvertex-360m-Q4_K_M.gguf" /content/apk-build/app/src/main/assets/
+!ls -lh /content/apk-build/app/src/main/assets/
+!ls -la /content/apk-build/gradlew
+```
+
+## Cell 3 — Clone llama.cpp (pinned b7123)
+```python
+!git clone --depth 1 --branch b7123 https://github.com/ggml-org/llama.cpp /content/apk-build/app/src/main/cpp/llama.cpp
+```
+
+## Cell 4 — Build APK (assembleRelease)
+```python
+import os
+os.environ["ANDROID_HOME"] = "/opt/android-sdk"
+os.environ["ANDROID_NDK_HOME"] = "/opt/android-sdk/ndk/27.1.12297006"
+os.environ["PATH"] = os.environ["ANDROID_HOME"] + "/cmdline-tools/latest/bin:" + os.environ["ANDROID_HOME"] + "/platform-tools:" + os.environ["PATH"]
+os.chdir("/content/apk-build")
+!chmod +x gradlew
+!./gradlew assembleRelease --no-daemon --max-workers=2
+```
+
+## Cell 5 — Copy APK to Google Drive
+```python
+!mkdir -p /content/drive/MyDrive/apk
+!cp /content/apk-build/app/build/outputs/apk/release/app-release.apk /content/drive/MyDrive/apk/tinyvertex-v1.apk
+!ls -lh /content/drive/MyDrive/apk/tinyvertex-v1.apk
+```
+
+## Notes
+- Total build time ~10–15 min (SDK deps ~5 min, NDK compile ~5 min)
+- APK size ~280–300 MB (model embedded offline-only)
+- Stock 360M model only (no fine-tuned gibberish)
+- System prompt: tiny-Vertex friend style, 1–2 sentences max, English only
