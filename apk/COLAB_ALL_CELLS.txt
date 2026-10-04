@@ -18,7 +18,7 @@
 ## Cell 2 — Clone repo + copy model from Google Drive (with verification)
 ```python
 from google.colab import drive
-drive.mount('/content/drive')
+drive.mount('/content/drive', force_remount=True)
 !cd /content && rm -rf apk-build && git clone https://github.com/vertexcorp101-AI/modelaimodel apk-build
 !mkdir -p /content/apk-build/apk/app/src/main/assets
 !ls -lh "/content/drive/MyDrive/tinyvertex-360m-Q4_K_M.gguf"
