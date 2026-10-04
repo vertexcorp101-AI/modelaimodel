@@ -15,15 +15,15 @@
 !echo "SDK ready: $(ls /opt/android-sdk/platforms)"
 ```
 
-## Cell 2 — Clone repo + copy model from Google Drive
+## Cell 2 — Clone repo + copy model from Google Drive (with verification)
 ```python
 from google.colab import drive
 drive.mount('/content/drive')
 !cd /content && rm -rf apk-build && git clone https://github.com/vertexcorp101-AI/modelaimodel apk-build
 !mkdir -p /content/apk-build/apk/app/src/main/assets
+!ls -lh "/content/drive/MyDrive/tinyvertex-360m-Q4_K_M.gguf"
 !cp "/content/drive/MyDrive/tinyvertex-360m-Q4_K_M.gguf" /content/apk-build/apk/app/src/main/assets/
-!ls -lh /content/apk-build/apk/app/src/main/assets/
-!ls -la /content/apk-build/apk/gradlew
+!ls -lh /content/apk-build/apk/app/src/main/assets/tinyvertex-360m-Q4_K_M.gguf
 ```
 
 ## Cell 3 — Clone llama.cpp (pinned b7123)
@@ -44,13 +44,20 @@ os.chdir("/content/apk-build/apk")
 
 ## Cell 5 — Find APK and copy to Google Drive
 ```python
-!cd /content && mkdir -p /content/drive/MyDrive/apk
-!find /content/apk-build -name 'app-release*.apk' 2>&1
-!APK=$(find /content/apk-build -name 'app-release*.apk' 2>/dev/null | head -n 1); [ -n "$APK" ] && cp "$APK" /content/drive/MyDrive/apk/tinyvertex-v1.apk && ls -lh /content/drive/MyDrive/apk/tinyvertex-v1.apk || echo 'APK NOT FOUND'
+import os, glob, shutil
+matches = glob.glob('/content/apk-build/**/app-release*.apk', recursive=True)
+print('Found:', matches)
+if matches:
+    dst = '/content/drive/MyDrive/apk/tinyvertex-v1.apk'
+    os.makedirs('/content/drive/MyDrive/apk', exist_ok=True)
+    shutil.copy2(matches[0], dst)
+    print('Copied to:', dst)
+else:
+    print('NOT FOUND')
 ```
 
 ## Notes
-- Total build time ~10–15 min (SDK deps ~5 min, NDK compile ~5 min)
-- APK size ~280–300 MB (model embedded offline-only)
-- Stock 360M model only (no fine-tuned gibberish)
+- Total build time ~10–15 min
+- APK size ~280–300 MB (model must be ~258MB in assets)
+- If APK ends up < 50MB, the model didn't copy — re-run Cell 2
 - System prompt: tiny-Vertex friend style, 1–2 sentences max, English only
