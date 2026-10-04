@@ -1,5 +1,0 @@
-numpy
-# torch is OPTIONAL and only needed to TRAIN the tiny fallback model
-# (python -m llm.train_cmd). The GGUF + provider path runs numpy/CPU only,
-# which keeps the Belmo 512MB build small. Install it manually to train:
-#   pip install torch --index-url https://download.pytorch.org/whl/cpu
