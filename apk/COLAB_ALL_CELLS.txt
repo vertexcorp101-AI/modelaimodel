@@ -19,8 +19,7 @@
 ```python
 from google.colab import drive
 drive.mount('/content/drive')
-!rm -rf /content/apk-build
-!git clone https://github.com/vertexcorp101-AI/modelaimodel /content/apk-build
+!cd /content && rm -rf apk-build && git clone https://github.com/vertexcorp101-AI/modelaimodel apk-build
 !mkdir -p /content/apk-build/apk/app/src/main/assets
 !cp "/content/drive/MyDrive/tinyvertex-360m-Q4_K_M.gguf" /content/apk-build/apk/app/src/main/assets/
 !ls -lh /content/apk-build/apk/app/src/main/assets/
@@ -29,7 +28,7 @@ drive.mount('/content/drive')
 
 ## Cell 3 — Clone llama.cpp (pinned b7123)
 ```python
-!git clone --depth 1 --branch b7123 https://github.com/ggml-org/llama.cpp /content/apk-build/apk/app/src/main/cpp/llama.cpp
+!cd /content && git clone --depth 1 --branch b7123 https://github.com/ggml-org/llama.cpp /content/apk-build/apk/app/src/main/cpp/llama.cpp
 ```
 
 ## Cell 4 — Build APK (assembleRelease)
@@ -43,11 +42,11 @@ os.chdir("/content/apk-build/apk")
 !./gradlew assembleRelease --no-daemon --max-workers=2
 ```
 
-## Cell 5 — Copy APK to Google Drive
+## Cell 5 — Find APK and copy to Google Drive
 ```python
-!mkdir -p /content/drive/MyDrive/apk
-!cp /content/apk-build/apk/app/build/outputs/apk/release/app-release.apk /content/drive/MyDrive/apk/tinyvertex-v1.apk
-!ls -lh /content/drive/MyDrive/apk/tinyvertex-v1.apk
+!cd /content && mkdir -p /content/drive/MyDrive/apk
+!find /content/apk-build -name 'app-release*.apk' 2>&1
+!APK=$(find /content/apk-build -name 'app-release*.apk' 2>/dev/null | head -n 1); [ -n "$APK" ] && cp "$APK" /content/drive/MyDrive/apk/tinyvertex-v1.apk && ls -lh /content/drive/MyDrive/apk/tinyvertex-v1.apk || echo 'APK NOT FOUND'
 ```
 
 ## Notes
